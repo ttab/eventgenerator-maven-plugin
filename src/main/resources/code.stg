@@ -47,6 +47,7 @@ public class <className> extends <extendsClause> {
 	}
 
 	<constructors:fireMethod(subclassName=subclassName)>
+
 }
 >>
 
@@ -54,7 +55,11 @@ event(packageName, className, subclassName, eventName, constructors, superClass)
 <body(extendsClause={<superClass>\<<className>.Handler\>},...)>
 >>
 
-request(packageName, className, subclassName, eventName, constructors) ::= <<
-<body(extendsClause={GwtEvent\<<className>.Handler\>},...)>
+request(packageName, className, subclassName, eventName, constructors, superClass, partnerClass) ::= <<
+<body(extendsClause={<superClass>\<<partnerClass>, <className>.Handler\>},...)>
+>>
+
+response(packageName, className, subclassName, eventName, constructors, superClass, partnerClass) ::= <<
+<body(extendsClause={<superClass>\<<partnerClass>, <className>.Handler\>},...)>
 >>
 

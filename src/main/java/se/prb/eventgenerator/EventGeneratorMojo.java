@@ -20,7 +20,7 @@ import com.thoughtworks.qdox.model.JavaParameter;
  */
 public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 	
-	private static final Pattern EVENT_NAME = Pattern.compile("(.*)(Event|Request|Response)?");
+	private static final Pattern EVENT_NAME = Pattern.compile("(.*?)(Event|Request|Response)?");
 
 	private DocletTag getTypeTag(JavaClass jc) {
 		for(EventType t: EventType.values()) {
@@ -52,7 +52,7 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 				} 
 
 				String partnerClass = null;
-				Matcher mt = EVENT_NAME.matcher(className);
+				Matcher mt = EVENT_NAME.matcher(jc.getName());
 				if (mt.matches()) {
 					if (type != EventType.event) 
 						partnerClass = mt.group(1) + type.partnerClassSuffix;
