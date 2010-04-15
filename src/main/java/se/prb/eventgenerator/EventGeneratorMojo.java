@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.antlr.stringtemplate.StringTemplate;
 
@@ -17,11 +19,13 @@ import com.thoughtworks.qdox.model.JavaParameter;
  * @phase generate-sources
  */
 public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
+	
+	private static final Pattern EVENT_NAME = Pattern.compile("(.*)(Event|Request|Response)?");
 
 	private DocletTag getTypeTag(JavaClass jc) {
-		for(String name: new String[] { "event", "request", "response"}) {
-		    if (jc.getTagByName(name) != null)
-				return jc.getTagByName(name);
+		for(EventType t: EventType.values()) {
+		    if (jc.getTagByName(t.toString()) != null)
+				return jc.getTagByName(t.toString());
 		}
 		return null;
 	}
@@ -36,24 +40,29 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 	@Override
 	public void generate() throws Exception {
 		for(JavaClass jc: docBuilder.getClasses()) {
-			DocletTag type = getTypeTag(jc);
-			if (type != null) {
-				System.out.println("CLASS: " + jc);
-				System.out.println("TYPE: " + type.getName());
-				
+			DocletTag tag = getTypeTag(jc);
+			if (tag != null) {
+				EventType type = EventType.valueOf(tag.getName());
+
 				String className = jc.getSuperClass().getJavaClass().getName();
 				if (className == null) {
-					getLog().error("Could not generate " + type.getName() + " for " + jc.asType() 
+					getLog().error("Could not generate " + tag.getName() + " for " + jc.asType() 
 							+ "; no superclass specified.");
 					continue;
 				} 
 
-				// List<JavaMethod> ctors = new LinkedList<JavaMethod>();
-				// for(JavaMethod m: jc.getMethods()) {
-				//     if (m.isConstructor()) {
-				// 		ctors.add(m);
-				// 	} 
-				// }
+				String partnerClass = null;
+				Matcher mt = EVENT_NAME.matcher(className);
+				if (mt.matches()) {
+					if (type != EventType.event) 
+						partnerClass = mt.group(1) + type.partnerClassSuffix;
+				} else {
+					getLog().warn("Class " + className + " does not follow Event|Request|Response naming convention.");
+				}
+
+				String superClass = tag.getNamedParameter("superclass");
+				if (superClass == null) 
+					superClass = type.defaultSuperClass;
 
 				List<Ctor> ctors = new LinkedList<Ctor>();
 				for(JavaMethod m: jc.getMethods()) {
@@ -66,12 +75,14 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 					} 
 				}
 
-				StringTemplate st = templates.getInstanceOf(type.getName());
+				StringTemplate st = templates.getInstanceOf(type.toString());
 				st.setAttribute("packageName", jc.getPackageName());
 				st.setAttribute("className", className);
 				st.setAttribute("subclassName", jc.getName());
 				st.setAttribute("eventName", getEventName(jc.getName()));
 				st.setAttribute("constructors", ctors);
+				st.setAttribute("superClass", superClass);
+				st.setAttribute("partnerClass", partnerClass);
 				
 				File pd = new File(outputDirectory, jc.getPackageName().replaceAll("\\.", "/"));
 				pd.mkdirs();
