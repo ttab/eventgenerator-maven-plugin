@@ -2,8 +2,10 @@ package se.prb.eventgenerator;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +15,7 @@ import com.thoughtworks.qdox.model.DocletTag;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaMethod;
 import com.thoughtworks.qdox.model.JavaParameter;
+import com.thoughtworks.qdox.model.Type;
 
 /**
  * @goal generate-sources
@@ -37,6 +40,42 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 		return clazz;
 	}
 
+	private Map<String, JavaClass> nameCache = new HashMap<String, JavaClass>();
+
+	private JavaClass getJavaClass(String className) {
+		JavaClass jc = nameCache.get(className);
+		if (jc == null) {
+			for(JavaClass jc2: docBuilder.getClasses()) {
+			    if(jc2.getName().equals(className)) {
+					nameCache.put(className, jc2);
+					return jc2;
+				}
+			}
+		}
+		return jc;
+	}
+
+	private List<Ctor> getCtors(JavaClass jc, JavaClass partner) {
+		List<Ctor> ctors = new LinkedList<Ctor>();
+		if (jc != null) {
+			for(JavaMethod m: jc.getMethods()) {
+				if (m.isConstructor()) {
+					List<Arg> args = new LinkedList<Arg>();
+					for(JavaParameter p: m.getParameters()) {
+						Type t = p.getType();
+						if (!t.isResolved() && t.toString().length() == 1 && partner != null) {
+							// Wild stab-in-the-dark here; just assume that the type matches the parter class
+							t = partner.asType();
+						} 
+						args.add(new Arg(t.toGenericString(), p.getName()));
+					}
+					ctors.add(new Ctor(m.getName(), args));
+				} 
+			}
+		}
+		return ctors;
+	}
+
 	@Override
 	public void generate() throws Exception {
 		for(JavaClass jc: docBuilder.getClasses()) {
@@ -51,11 +90,11 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 					continue;
 				} 
 
-				String partnerClass = null;
+				JavaClass partnerClass = null;
 				Matcher mt = EVENT_NAME.matcher(jc.getName());
 				if (mt.matches()) {
 					if (type != EventType.event) 
-						partnerClass = mt.group(1) + type.partnerClassSuffix;
+						partnerClass = getJavaClass(mt.group(1) + type.partnerClassSuffix);
 				} else {
 					getLog().warn("Class " + className + " does not follow Event|Request|Response naming convention.");
 				}
@@ -64,25 +103,15 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 				if (superClass == null) 
 					superClass = type.defaultSuperClass;
 
-				List<Ctor> ctors = new LinkedList<Ctor>();
-				for(JavaMethod m: jc.getMethods()) {
-					if (m.isConstructor()) {
-						List<Arg> args = new LinkedList<Arg>();
-						for(JavaParameter p: m.getParameters()) {
-							args.add(new Arg(p.getType().toGenericString(), p.getName()));
-						}
-						ctors.add(new Ctor(m.getName(), args));
-					} 
-				}
-
 				StringTemplate st = templates.getInstanceOf(type.toString());
 				st.setAttribute("packageName", jc.getPackageName());
 				st.setAttribute("className", className);
 				st.setAttribute("subclassName", jc.getName());
 				st.setAttribute("eventName", getEventName(jc.getName()));
-				st.setAttribute("constructors", ctors);
+				st.setAttribute("constructors", getCtors(jc, null));
+				st.setAttribute("superclassConstructors", getCtors(getJavaClass(superClass), partnerClass));
 				st.setAttribute("superClass", superClass);
-				st.setAttribute("partnerClass", partnerClass);
+				st.setAttribute("partnerClass", partnerClass != null ? partnerClass.getName() : null);
 				
 				File pd = new File(outputDirectory, jc.getPackageName().replaceAll("\\.", "/"));
 				pd.mkdirs();

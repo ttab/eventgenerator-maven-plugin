@@ -8,7 +8,13 @@ public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <
 
 >>
 
-body(packageName, className, subclassName, eventName, constructors, extendsClause) ::= <<
+constructor(ctor, className) ::= <<
+protected <className>(<it.args:{<it.type> <it.name>}; separator=", ">) {
+	super(<it.args:{<it.name>}; separator=", ">);
+}		  
+>>
+
+body(packageName, className, subclassName, eventName, constructors, superclassConstructors, extendsClause) ::= <<
 package <packageName>;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -48,18 +54,19 @@ public class <className> extends <extendsClause> {
 
 	<constructors:fireMethod(subclassName=subclassName)>
 
+	<superclassConstructors:constructor(className=className)>
 }
 >>
 
-event(packageName, className, subclassName, eventName, constructors, superClass) ::= <<
+event(packageName, className, subclassName, eventName, constructors, superclassConstructors, superClass) ::= <<
 <body(extendsClause={<superClass>\<<className>.Handler\>},...)>
 >>
 
-request(packageName, className, subclassName, eventName, constructors, superClass, partnerClass) ::= <<
+request(packageName, className, subclassName, eventName, constructors, superclassConstructors, superClass, partnerClass) ::= <<
 <body(extendsClause={<superClass>\<<partnerClass>, <className>.Handler\>},...)>
 >>
 
-response(packageName, className, subclassName, eventName, constructors, superClass, partnerClass) ::= <<
+response(packageName, className, subclassName, eventName, constructors, superclassConstructors, superClass, partnerClass) ::= <<
 <body(extendsClause={<superClass>\<<partnerClass>, <className>.Handler\>},...)>
 >>
 
