@@ -1,9 +1,31 @@
 group code;
 
-fireMethod(ctor, subclassName) ::= <<
+fireMethodEvent(ctor, subclassName) ::= <<
 public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <it.args:{<it.type> <it.name>}; separator=", ">) {
 	<subclassName> event = new <subclassName>(<it.args:{<it.name>}; separator=", ">);
 	source.fireEvent(event);
+}
+
+>>
+
+fireMethodRequest(ctor, subclassName, partnerClass) ::= <<
+public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <it.args:{<it.type> <it.name>}; separator=", ">) {
+	<subclassName> event = new <subclassName>(<it.args:{<it.name>}; separator=", ">);
+	source.fireEvent(event);
+}
+
+public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <it.args:{<it.type> <it.name>}; separator=", ">, <partnerClass>.Handler exclusive) {
+	<subclassName> event = new <subclassName>(<it.args:{<it.name>}; separator=", ">);
+	event.setExclusiveRecipient(exclusive);
+	source.fireEvent(event);
+}
+
+>>
+
+fireMethodResponse(ctor, subclassName, partnerClass) ::= <<
+public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <it.args:{<it.type> <it.name>}; separator=", ">) {
+	<subclassName> event = new <subclassName>(<it.args:{<it.name>}; separator=", ">);
+	event.dispatchResponse(source);
 }
 
 >>
@@ -14,7 +36,7 @@ protected <className>(<it.args:{<it.type> <it.name>}; separator=", ">) {
 }		  
 >>
 
-body(packageName, className, subclassName, eventName, constructors, superclassConstructors, extendsClause) ::= <<
+body(packageName, className, subclassName, eventName, constructors, superclassConstructors, fireMethod, extendsClause) ::= <<
 package <packageName>;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -52,21 +74,25 @@ public class <className> extends <extendsClause> {
 		HandlerRegistration add<eventName>Handler(Handler handler);
 	}
 
-	<constructors:fireMethod(subclassName=subclassName)>
+	<fireMethod>
 
 	<superclassConstructors:constructor(className=className)>
 }
 >>
 
 event(packageName, className, subclassName, eventName, constructors, superclassConstructors, superClass) ::= <<
-<body(extendsClause={<superClass>\<<className>.Handler\>},...)>
+<body(extendsClause={<superClass>\<<className>.Handler\>},
+	fireMethod={<constructors:fireMethodEvent(subclassName=subclassName)>}, ...)>
 >>
 
 request(packageName, className, subclassName, eventName, constructors, superclassConstructors, superClass, partnerClass) ::= <<
-<body(extendsClause={<superClass>\<<partnerClass>, <className>.Handler\>},...)>
+<body(extendsClause={<superClass>\<<partnerClass>, <className>.Handler\>},
+        fireMethod={<constructors:fireMethodRequest(subclassName=subclassName, partnerClass=partnerClass)>}, ...)>	
 >>
 
 response(packageName, className, subclassName, eventName, constructors, superclassConstructors, superClass, partnerClass) ::= <<
-<body(extendsClause={<superClass>\<<partnerClass>, <className>.Handler\>},...)>
+<body(extendsClause={<superClass>\<<partnerClass>, <className>.Handler\>},
+        fireMethod={<constructors:fireMethodResponse(subclassName=subclassName, partnerClass=partnerClass)>}, ...)>	
+
 >>
 
