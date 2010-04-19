@@ -30,7 +30,7 @@ public abstract class AbstractCodeGeneratorMojo extends AbstractMojo {
 	List<String> sources;
 
 	/**
-	 * @parameter default-value="target/generated-sources/eventgenerator"
+	 * @parameter default-value="${project.build.directory}/generated-sources/eventgenerator"
 	 * @required
 	 */
 	File outputDirectory;

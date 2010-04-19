@@ -1,7 +1,11 @@
 group code;
 
+arglist(args) ::= <<
+S source<if(args)>,<endif> <args:{<it.type> <it.name>}; separator=", ">
+>>
+
 fireMethodEvent(ctor, subclassName) ::= <<
-public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <it.args:{<it.type> <it.name>}; separator=", ">) {
+public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source<if(it.args)>,<endif> <it.args:{<it.type> <it.name>}; separator=", ">) {
 	<subclassName> event = new <subclassName>(<it.args:{<it.name>}; separator=", ">);
 	source.fireEvent(event);
 }
@@ -9,12 +13,12 @@ public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <
 >>
 
 fireMethodRequest(ctor, subclassName, partnerClass) ::= <<
-public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <it.args:{<it.type> <it.name>}; separator=", ">) {
+public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source<if(it.args)>,<endif> <it.args:{<it.type> <it.name>}; separator=", ">) {
 	<subclassName> event = new <subclassName>(<it.args:{<it.name>}; separator=", ">);
 	source.fireEvent(event);
 }
 
-public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source, <it.args:{<it.type> <it.name>}; separator=", ">, <partnerClass>.Handler exclusive) {
+public static \<S extends HasEventHandlers & HasHandlers\> void fire(S source<if(it.args)>,<endif> <it.args:{<it.type> <it.name>}; separator=", ">, <partnerClass>.Handler exclusive) {
 	<subclassName> event = new <subclassName>(<it.args:{<it.name>}; separator=", ">);
 	event.setExclusiveRecipient(exclusive);
 	source.fireEvent(event);
