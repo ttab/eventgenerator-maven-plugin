@@ -78,6 +78,8 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 
 	@Override
 	public void generate() throws Exception {
+		int c = 0;
+		int m = 0;
 		for(JavaClass jc: docBuilder.getClasses()) {
 			DocletTag tag = getTypeTag(jc);
 			if (tag != null) {
@@ -87,6 +89,15 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 				if (className == null) {
 					getLog().error("Could not generate " + tag.getName() + " for " + jc.asType() 
 							+ "; no superclass specified.");
+					continue;
+				} 
+
+				File pd = new File(outputDirectory, jc.getPackageName().replaceAll("\\.", "/"));
+				pd.mkdirs();
+				File resultingFile = new File(pd, className + ".java");
+				if (resultingFile.exists() && resultingFile.lastModified() > jc.getSource().getFile().lastModified()) {
+					getLog().debug(jc.getName() + " not modified; skipping.");
+					m++;
 					continue;
 				} 
 
@@ -113,9 +124,7 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 				st.setAttribute("superClass", superClass);
 				st.setAttribute("partnerClass", partnerClass != null ? partnerClass.getName() : null);
 				
-				File pd = new File(outputDirectory, jc.getPackageName().replaceAll("\\.", "/"));
-				pd.mkdirs();
-				FileWriter out = new FileWriter(new File(pd, className + ".java"));
+				FileWriter out = new FileWriter(resultingFile);
 				try {
 					out.append(st.toString());
 				} finally {
@@ -126,8 +135,10 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 					getLog().debug(className + ".java :");
 					getLog().debug(st.toString());
 				} 
+				c++;
 			}
 		}
+		getLog().info(c + " event class(es) generated; " + m + " not modified.");
 	}
 
 	public static class Ctor {
