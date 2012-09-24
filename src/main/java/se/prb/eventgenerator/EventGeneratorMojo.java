@@ -20,6 +20,7 @@ import com.thoughtworks.qdox.model.Type;
 /**
  * @goal generate-sources
  * @phase generate-sources
+ * @requiresDependencyResolution compile
  */
 public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 	
@@ -76,7 +77,8 @@ public class EventGeneratorMojo extends AbstractCodeGeneratorMojo {
 		return ctors;
 	}
 
-	@Override
+	@SuppressWarnings("deprecation")
+    @Override
 	public void generate() throws Exception {
 		int c = 0;
 		int m = 0;
