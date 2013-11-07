@@ -12,9 +12,14 @@
 	<distributionManagement>
 		<repository>
 			<id>nexus</id>
-			<name>Nexus Staging Repo</name>
-			<url>http://tt-dev01/nexus/content/repositories/releases/</url>
+			<name>Nexus release repo</name>
+			<url>http://repo.ad.tt.se/nexus/content/repositories/releases/</url>
 		</repository>
+		<snapshotRepository>
+			<id>nexus-snapshots</id>
+			<name>Nexus release repo</name>
+			<url>http://repo.ad.tt.se/nexus/content/repositories/snapshots/</url>
+		</snapshotRepository>
 	</distributionManagement>
 	<build>
 		<plugins>
