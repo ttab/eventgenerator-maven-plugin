@@ -11,17 +11,23 @@
 	</properties>
 	<distributionManagement>
 		<repository>
-			<id>nexus</id>
-			<name>Nexus release repo</name>
-			<url>http://repo.ad.tt.se/nexus/content/repositories/releases/</url>
+      <id>ssh-repository</id>
+      <url>scpexe://repo.ad.tt.se/var/www/maven/releases</url>
 		</repository>
 		<snapshotRepository>
-			<id>nexus-snapshots</id>
-			<name>Nexus release repo</name>
-			<url>http://repo.ad.tt.se/nexus/content/repositories/snapshots/</url>
+      <id>ssh-repository</id>
+      <url>scpexe://repo.ad.tt.se/var/www/maven/snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
 	<build>
+    <extensions>
+      <!-- Enabling the use of SSH -->
+      <extension>
+        <groupId>org.apache.maven.wagon</groupId>
+         <artifactId>wagon-ssh-external</artifactId>
+         <version>2.10</version>
+      </extension>
+    </extensions>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
